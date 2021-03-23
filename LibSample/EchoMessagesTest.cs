@@ -7,7 +7,7 @@ using LiteNetLib.Utils;
 
 namespace LibSample
 {
-    class EchoMessagesTest
+    class EchoMessagesTest : IExample
     {
         private static int _messagesReceivedCount = 0;
 
@@ -165,6 +165,7 @@ namespace LibSample
             _serverListener = new ServerListener();
 
             NetManager server = new NetManager(_serverListener);
+
             if (!server.Start(Port))
             {
                 Console.WriteLine("Server start failed");

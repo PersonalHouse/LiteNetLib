@@ -3,6 +3,20 @@ using System.Diagnostics;
 
 namespace LiteNetLib
 {
+    public class InvalidPacketException : ArgumentException
+    {
+        public InvalidPacketException(string message) : base(message)
+        {
+        }
+    }
+
+    public class TooBigPacketException : InvalidPacketException
+    {
+        public TooBigPacketException(string message) : base(message)
+        {
+        }
+    }
+
     public enum NetLogLevel
     {
         Warning,
@@ -33,7 +47,7 @@ namespace LiteNetLib
             {
                 if (Logger == null)
                 {
-#if UNITY_4 || UNITY_5 || UNITY_5_3_OR_NEWER
+#if UNITY_5_3_OR_NEWER
                     UnityEngine.Debug.Log(string.Format(str, args));
 #else
                     Console.WriteLine(str, args);

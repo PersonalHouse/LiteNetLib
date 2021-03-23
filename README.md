@@ -1,10 +1,10 @@
-# LiteNetLib 0.9 indev
+# LiteNetLib 1.0 indev
 
-Lite reliable UDP library for .NET Framework 3.5, Mono, .NET Core 2.1, .NET Standard 2.0.
+Lite reliable UDP library for .NET Framework 4.6, Mono, .NET Core 2.1, .NET Standard 2.0.
 
 **Discord chat**: [![Discord](https://img.shields.io/discord/501682175930925058.svg)](https://discord.gg/FATFPdy)
 
-[OLD BRANCH (and examples) for 0.8.x](https://github.com/RevenantX/LiteNetLib/tree/0.8)
+[OLD BRANCH (and examples) for 0.9.x](https://github.com/RevenantX/LiteNetLib/tree/0.9)
 
 [Little Game Example on Unity](https://github.com/RevenantX/NetGameExample)
 
@@ -20,7 +20,7 @@ Lite reliable UDP library for .NET Framework 3.5, Mono, .NET Core 2.1, .NET Stan
 ( Warning! Master branch can be unstable! )
 
 ### Donations are welcome and will help further development of this project.
-[![Bountysource](https://img.shields.io/badge/bountysource-donate-green.svg)](https://salt.bountysource.com/checkout/amount?team=litenetlib)
+https://www.buymeacoffee.com/revx
 
 ## Features
 
@@ -50,13 +50,14 @@ Lite reliable UDP library for .NET Framework 3.5, Mono, .NET Core 2.1, .NET Stan
 * Multicasting (for discovering hosts in local network)
 * Unity support
 * Supported platforms:
-  * Windows/Mac/Linux (.NET Framework, Mono, .NET Core)
-  * Android (Unity)
-  * iOS (Unity)
-  * UWP Windows 10 including phones
+  * Windows/Mac/Linux (.NET Framework, Mono, .NET Core, .NET Standard)
   * Lumin OS (Magic Leap)
+  * Monogame
+  * Godot
+  * Unity 2018.3 (Desktop platforms, Android, iOS, Switch)
 
 ## Unity notes!!!
+* Minimal supported Unity is 2018.3. For older Unity versions use [0.9.x library](https://github.com/RevenantX/LiteNetLib/tree/0.9) versions
 * Always use library sources instead of precompiled DLL files ( because there are platform specific #ifdefs and workarounds for unity bugs )
 
 ## Usage samples
@@ -89,7 +90,7 @@ server.Start(9050 /* port */);
 
 listener.ConnectionRequestEvent += request =>
 {
-    if(server.PeersCount < 10 /* max connections */)
+    if(server.ConnectedPeersCount < 10 /* max connections */)
         request.AcceptIfKey("SomeConnectionKey");
     else
         request.Reject();

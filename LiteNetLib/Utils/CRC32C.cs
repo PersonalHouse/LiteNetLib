@@ -1,5 +1,6 @@
-﻿#if NETCOREAPP3_0
+﻿#if NETCOREAPP3_0_OR_GREATER || NETCOREAPP3_1
 using System;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 #endif
 
@@ -8,20 +9,14 @@ namespace LiteNetLib.Utils
     //Implementation from Crc32.NET
     public static class CRC32C
     {
-#if NETCOREAPP3_0
-        private static readonly bool _x64Available;
-        private static readonly bool _sseAvailable;
-#endif
         public const int ChecksumSize = 4;
         private const uint Poly = 0x82F63B78u;
         private static readonly uint[] Table;
 
         static CRC32C()
         {
-#if NETCOREAPP3_0
-            _sseAvailable = Sse42.IsSupported;
-            _x64Available = Sse42.X64.IsSupported;
-            if(_sseAvailable)
+#if NETCOREAPP3_0_OR_GREATER || NETCOREAPP3_1
+            if(Sse42.IsSupported)
                 return;
 #endif
             Table = new uint[16 * 256];
@@ -47,24 +42,38 @@ namespace LiteNetLib.Utils
         public static uint Compute(byte[] input, int offset, int length)
         {
             uint crcLocal = uint.MaxValue;
-#if NETCOREAPP3_0
-            if(_sseAvailable)
+#if NETCOREAPP3_0_OR_GREATER || NETCOREAPP3_1
+            if (Sse42.IsSupported)
             {
-                if (_x64Available)
+                var data = new ReadOnlySpan<byte>(input, offset, length);
+                int processed = 0;
+                if (Sse42.X64.IsSupported && data.Length > sizeof(ulong))
                 {
-                    while (length >= 8)
+                    processed = data.Length / sizeof(ulong) * sizeof(ulong);
+                    var ulongs = MemoryMarshal.Cast<byte, ulong>(data.Slice(0, processed));
+                    ulong crclong = crcLocal;
+                    for (int i = 0; i < ulongs.Length; i++)
                     {
-                        crcLocal = (uint)Sse42.X64.Crc32(crcLocal, BitConverter.ToUInt64(input, offset));
-                        offset += 8;
-                        length -= 8;
+                        crclong = Sse42.X64.Crc32(crclong, ulongs[i]);
+                    }
+
+                    crcLocal = (uint)crclong;
+                }
+                else if (data.Length > sizeof(uint))
+                {
+                    processed = data.Length / sizeof(uint) * sizeof(uint);
+                    var uints = MemoryMarshal.Cast<byte, uint>(data.Slice(0, processed));
+                    for (int i = 0; i < uints.Length; i++)
+                    {
+                        crcLocal = Sse42.Crc32(crcLocal, uints[i]);
                     }
                 }
-                while (length > 0)
+
+                for (int i = processed; i < data.Length; i++)
                 {
-                    crcLocal = Sse42.Crc32(crcLocal, input[offset]);
-                    offset++;
-                    length--;
+                    crcLocal = Sse42.Crc32(crcLocal, data[i]);
                 }
+
                 return crcLocal ^ uint.MaxValue;
             }
 #endif

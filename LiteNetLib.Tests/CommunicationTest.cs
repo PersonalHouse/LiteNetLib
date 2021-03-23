@@ -60,6 +60,26 @@ namespace LiteNetLib.Tests
         }
 
         [Test, Timeout(TestTimeout)]
+        public void P2PConnect()
+        {
+            var client1 = ManagerStack.Client(1);
+            var client2 = ManagerStack.Client(2);
+
+            client1.Connect("127.0.0.1", client2.LocalPort, DefaultAppKey);
+            client2.Connect("127.0.0.1", client1.LocalPort, DefaultAppKey);
+
+            while (client1.ConnectedPeersCount != 1 || client2.ConnectedPeersCount != 1)
+            {
+                Thread.Sleep(15);
+                client1.PollEvents();
+                client2.PollEvents();
+            }
+
+            Assert.AreEqual(1, client1.ConnectedPeersCount);
+            Assert.AreEqual(1, client2.ConnectedPeersCount);
+        }
+
+        [Test, Timeout(TestTimeout)]
         public void ConnectionByIpV4Unsynced()
         {
             var server = ManagerStack.Server(1);
@@ -157,7 +177,7 @@ namespace LiteNetLib.Tests
             NetManager client = ManagerStack.Client(1);
 
             var result = false;
-            DisconnectInfo disconnectInfo = default(DisconnectInfo);
+            DisconnectInfo disconnectInfo = default;
 
             ManagerStack.ClientListener(1).PeerDisconnectedEvent += (peer, info) => 
             {
@@ -636,6 +656,31 @@ namespace LiteNetLib.Tests
             Assert.AreSame(ManagerStack.Server(1), ManagerStack.Server(1));
             Assert.AreNotSame(ManagerStack.Server(1), ManagerStack.Client(1));
             Assert.AreNotSame(ManagerStack.Server(1), ManagerStack.Client(2));
+        }
+
+        [Test, Timeout(TestTimeout)]
+        public void ManualMode()
+        {
+            var serverListener = new EventBasedNetListener();
+            var server = new NetManager(serverListener, new Crc32cLayer());
+
+            serverListener.ConnectionRequestEvent += request => request.AcceptIfKey(DefaultAppKey);
+
+            var client = ManagerStack.Client(1);
+            Assert.IsTrue(server.StartInManualMode(DefaultPort));
+
+            client.Connect("127.0.0.1", DefaultPort, DefaultAppKey);
+
+            while (server.ConnectedPeersCount != 1 || client.ConnectedPeersCount != 1)
+            {
+                Thread.Sleep(15);
+                server.PollEvents();
+                server.ManualUpdate(15);
+            }
+
+            Assert.AreEqual(1, server.ConnectedPeersCount);
+            Assert.AreEqual(1, client.ConnectedPeersCount);
+            server.Stop();
         }
 
         [Test]
